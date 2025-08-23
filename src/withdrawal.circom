@@ -49,7 +49,7 @@ template Withdrawal() {
     // 0 - 83 is occupied.
     // Start from 84.
     for (var i = 0; i < BYTES_16; i++) {
-        var insertIndex = 84 + i;
+        var insertIndex = (84 * 8) + i;
         wKeyAndSKeyConcat[insertIndex] = secretKey[i];
     }
 
@@ -74,7 +74,7 @@ template Withdrawal() {
     // Now we have a complete 84 byte deposit key.
     // Built out of the withdrawal key.
     // This will be used for the merkle root computation.
-    for (var i = 32; i < BYTES_84; i++) {
+    for (var i = 32 * 8; i < BYTES_84; i++) {
         depositKey[i] = withdrawalkey[i];
     }
     // STEP 2 END.
