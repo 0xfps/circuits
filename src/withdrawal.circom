@@ -36,6 +36,8 @@ template Withdrawal() {
     // This holds the concatenated withdrawalkey and secret key.
     var wKeyAndSKeyConcat[BYTES_84 + BYTES_16];
 
+    // STEP 1 START.
+    // Intermediate signals will hold the result of every step.
     // Recompute deposit key.
     // On the smart contract, encodePacked, here, concatenated.
     // First, copy all withdrawal key values into the concat.
@@ -50,4 +52,14 @@ template Withdrawal() {
         var insertIndex = 84 + i;
         wKeyAndSKeyConcat[insertIndex] = secretKey[i];
     }
+
+    component keyConcatHash = Keccak(BYTES_84 + BYTES_16, BYTES_32);
+    keyConcatHash.in <== wKeyAndSKeyConcat;
+
+    // Hold the hash of the above in this.
+    // @note THIS IS NOT A CONSTRAINT!
+    signal wKeyAndSKeyConcatHash[BYTES_32] <-- keyConcatHash.out;
+    // STEP 1 END.
+
+    
 }
