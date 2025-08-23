@@ -7,6 +7,7 @@ template Withdrawal() {
 
     var BYTES_16 = 16 * 8;
     var BYTES_32 = 32 * 8;
+    var BYTES_64 = 64 * 8;
     var BYTES_84 = 84 * 8;
 
     // Merkle root, 32 bytes, computed with keccak256.
@@ -22,15 +23,17 @@ template Withdrawal() {
     signal input proof[ARRAY_LEN][BYTES_32];
     // Direction each 32 byte array will go to the subsequent
     // hash.
-    signal input direction[ARRAY_LEN];
+    signal input directions[ARRAY_LEN];
     // Valid bits, an array with 1s and 0s, control array.
     // Wherever 0 starts, the loop stops.
     signal input validBits[ARRAY_LEN];
 
+    // Just like the contract, hashes will be kept in levels.
+    signal input levelHash[ARRAY_LEN][BYTES_32];
+
     // This signal holds tiny info when needed;
     // Signal? Variable?
     // Var for now. @todo Consider changing these.
-    var currentHash;
     // This holds the re-computed deposit key.
     var depositKey[BYTES_84];
     // This holds the concatenated withdrawalkey and secret key.
@@ -49,16 +52,16 @@ template Withdrawal() {
     // 0 - 83 is occupied.
     // Start from 84.
     for (var i = 0; i < BYTES_16; i++) {
-        var insertIndex = (84 * 8) + i;
+        var insertIndex = BYTES_84 + i;
         wKeyAndSKeyConcat[insertIndex] = secretKey[i];
     }
 
-    component keyConcatHash = Keccak(BYTES_84 + BYTES_16, BYTES_32);
-    keyConcatHash.in <== wKeyAndSKeyConcat;
+    component keyConcatHasher = Keccak(BYTES_84 + BYTES_16, BYTES_32);
+    keyConcatHasher.in <== wKeyAndSKeyConcat;
 
     // Hold the hash of the above in this.
     // @note THIS IS NOT A CONSTRAINT!
-    signal wKeyAndSKeyConcatHash[BYTES_32] <-- keyConcatHash.out;
+    signal wKeyAndSKeyConcatHash[BYTES_32] <-- keyConcatHasher.out;
     // STEP 1 END.
 
     // STEP 2 START.
@@ -74,8 +77,45 @@ template Withdrawal() {
     // Now we have a complete 84 byte deposit key.
     // Built out of the withdrawal key.
     // This will be used for the merkle root computation.
-    for (var i = 32 * 8; i < BYTES_84; i++) {
+    for (var i = BYTES_32; i < BYTES_84; i++) {
         depositKey[i] = withdrawalkey[i];
     }
+
+    component depositKeyHasher = Keccak(BYTES_84, BYTES_32);
+    depositKeyHasher.in <== depositKey;
+
+    // Hold the hash of the above in this.
+    // @note THIS IS NOT A CONSTRAINT!
+    signal depositKeyHash[BYTES_32] <-- depositKeyHasher.out;
     // STEP 2 END.
+
+    // STEP 3 START.
+    // This is where it gets quite complex.
+    // This index will keep track of where the last
+    // hash was stored.
+    var lastHashIndex = 0;
+    signal currentHash[BYTES_32] <-- depositKeyHash;
+    signal concatHash[BYTES_64];
+
+    component leafHasher[ARRAY_LEN];
+    
+    // for (var i = 0; i < ARRAY_LEN; i++) {
+    //     var isValidBit = validBits[i];
+
+    //     if (isValidBit == 1) {
+    //         var direction = directions[i];
+    //         var hash[BYTES_32] = currentHash;
+
+    //         if (direction == 0) {}
+    //         else {}
+
+    //         leafHasher[i] = Keccak(BYTES_64, BYTES_32);
+    //         leafHasher[i].in <== hash;
+    //         // signal leafHash <-- leafHasher.out;
+    //     }
+    // }
+    // STEP 3 END.
+
+    // Constraint.
+    root === levelHash[lastHashIndex];
 }
