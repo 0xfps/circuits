@@ -94,28 +94,52 @@ template Withdrawal() {
     // This index will keep track of where the last
     // hash was stored.
     var lastHashIndex = 0;
-    signal currentHash[BYTES_32] <-- depositKeyHash;
-    signal concatHash[BYTES_64];
-
+    var currentHash[BYTES_32] = depositKeyHash;
+    
     component leafHasher[ARRAY_LEN];
     
-    // for (var i = 0; i < ARRAY_LEN; i++) {
-    //     var isValidBit = validBits[i];
+    for (var i = 0; i < ARRAY_LEN; i++) {
+        var isValidBit = validBits[i];
 
-    //     if (isValidBit == 1) {
-    //         var direction = directions[i];
-    //         var hash[BYTES_32] = currentHash;
+        // if (isValidBit == 0) { // Causes bugs as well.
+            var direction = directions[i];
+            var hash[BYTES_32] = currentHash;
+            var concatHash[BYTES_64];
 
-    //         if (direction == 0) {}
-    //         else {}
+            if (direction == 0) {
+                // Put the hash first.
+                for (var j = 0; j < BYTES_32; j++) {
+                    concatHash[j] = hash[j];
+                }
 
-    //         leafHasher[i] = Keccak(BYTES_64, BYTES_32);
-    //         leafHasher[i].in <== hash;
-    //         // signal leafHash <-- leafHasher.out;
-    //     }
-    // }
+                // Put the leaf second.
+                for (var j = 0; j < BYTES_32; j++) {
+                    var insertIndex = BYTES_32 + j;
+                    concatHash[insertIndex] = proof[i][j];
+                }
+            }
+            else {
+                // Put the leaf first.
+                for (var j = 0; j < BYTES_32; j++) {
+                    concatHash[j] = proof[i][j];
+                }
+
+                // Put the hash second.
+                for (var j = 0; j < BYTES_32; j++) {
+                    var insertIndex = BYTES_32 + j;
+                    concatHash[insertIndex] = hash[j];
+                }
+            }
+
+            // leafHasher[i] = Keccak(BYTES_64, BYTES_32);
+            // leafHasher[i].in <== concatHash; // Errorneous.
+            // currentHash = leafHasher[i].out; // Errored because of 135.
+            // levelHash[i] <-- leafHasher[i].out; // Errored because of 135.
+            lastHashIndex++;
+        // }
+    }
     // STEP 3 END.
 
     // Constraint.
-    root === levelHash[lastHashIndex];
+    // root === levelHash[lastHashIndex];
 }
