@@ -59,7 +59,5 @@ template Withdrawal() {
     // Hold the hash of the above in this.
     // @note THIS IS NOT A CONSTRAINT!
     signal wKeyAndSKeyConcatHash[BYTES_32] <-- keyConcatHash.out;
-    // STEP 1 END.
-
-    
+    // STEP 1 END.    
 }
