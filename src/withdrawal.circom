@@ -59,5 +59,23 @@ template Withdrawal() {
     // Hold the hash of the above in this.
     // @note THIS IS NOT A CONSTRAINT!
     signal wKeyAndSKeyConcatHash[BYTES_32] <-- keyConcatHash.out;
-    // STEP 1 END.    
+    // STEP 1 END.
+
+    // STEP 2 START.
+    // Copy the hash to the deposit key.
+    // This will occupy the first 32 bytes.
+    // 0 - 31.
+    for (var i = 0; i < BYTES_32; i++) {
+        depositKey[i] = wKeyAndSKeyConcatHash[i];
+    }
+
+    // For 32 - 83.
+    // Copy the last 52 bytes of the withdrawal key.
+    // Now we have a complete 84 byte deposit key.
+    // Built out of the withdrawal key.
+    // This will be used for the merkle root computation.
+    for (var i = 32; i < BYTES_84; i++) {
+        depositKey[i] = withdrawalkey[i];
+    }
+    // STEP 2 END.
 }
