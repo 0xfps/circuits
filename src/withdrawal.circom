@@ -96,16 +96,26 @@ template Withdrawal() {
     // hash was stored.
     var lastHashIndex = 0;
     var currentHash[BYTES_32] = depositKeyHash;
+    var currentConcat[BYTES_64];
     
-    component concaters[ARRAY_LEN]; 
+    component concaters[ARRAY_LEN];
+    component hashers[ARRAY_LEN];
     
     for (var i = 0; i < ARRAY_LEN; i++) {
-        concaters[i] = Concatenator(0);
-        concaters[i].firstHash <== depositKeyHash;
+        concaters[i] = Concatenator();
+        hashers[i] = Keccak(BYTES_64, BYTES_32);
+
+        concaters[i].direction <== validBits[i];
+        concaters[i].firstHash <== currentHash;
         concaters[i].secondHash <== proof[i];
+
+        currentConcat = concaters[i].concatHash;
+
+        hashers[i].in <== currentConcat;
+        currentHash = hashers[i].out;
     }
     // STEP 3 END.
 
-    // Constraint.
-    // root === levelHash[lastHashIndex];
+    // Final constraint.
+    root === currentHash;
 }
