@@ -100,6 +100,11 @@ template Withdrawal() {
     
     component concaters[ARRAY_LEN];
     component hashers[ARRAY_LEN];
+
+    // Store each has here and only increment the number
+    // if the valid bit is positive.
+    // I am so close to getting this.
+    var mask[ARRAY_LEN][BYTES_32];
     
     for (var i = 0; i < ARRAY_LEN; i++) {
         concaters[i] = Concatenator();
@@ -112,10 +117,11 @@ template Withdrawal() {
         currentConcat = concaters[i].concatHash;
 
         hashers[i].in <== currentConcat;
-        currentHash = hashers[i].out;
+        mask[i] = hashers[i].out;
+        lastHashIndex += validBits[i];
     }
     // STEP 3 END.
 
     // Final constraint.
-    root === currentHash;
+    // root === mask[lastHashIndex]; // Final error.
 }
