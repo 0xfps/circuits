@@ -96,6 +96,14 @@ template Withdrawal() {
     // hash was stored.
     var lastHashIndex = 0;
     var currentHash[BYTES_32] = depositKeyHash;
+    
+    component concaters[ARRAY_LEN]; 
+    
+    for (var i = 0; i < ARRAY_LEN; i++) {
+        concaters[i] = Concatenator(0);
+        concaters[i].firstHash <== depositKeyHash;
+        concaters[i].secondHash <== proof[i];
+    }
     // STEP 3 END.
 
     // Constraint.
