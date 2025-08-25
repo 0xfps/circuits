@@ -1,6 +1,7 @@
 pragma circom 2.2.2;
 
 include "../node_modules/keccak256-circom/circuits/keccak.circom";
+include "./concatenator.circom";
 
 template Withdrawal() {
     var ARRAY_LEN = 32;
