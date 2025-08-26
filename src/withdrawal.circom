@@ -1,7 +1,7 @@
 pragma circom 2.2.2;
 
-include "../node_modules/keccak256-circom/circuits/keccak.circom";
 include "./concatenator.circom";
+include "../node_modules/circomlib/circuits/sha256/sha256.circom";
 
 template Withdrawal() {
     var ARRAY_LEN = 32;
@@ -11,7 +11,7 @@ template Withdrawal() {
     var BYTES_64 = 64 * 8;
     var BYTES_84 = 84 * 8;
 
-    // Merkle root, 32 bytes, computed with keccak256.
+    // Merkle root, 32 bytes, computed with SHA256.
     signal input root[BYTES_32];
     // User's secret key, a string of 16 characters, 16 bytes.
     // On the UI, it will be converted from a 16 character string
@@ -57,7 +57,7 @@ template Withdrawal() {
         wKeyAndSKeyConcat[insertIndex] = secretKey[i];
     }
 
-    component keyConcatHasher = Keccak(BYTES_84 + BYTES_16, BYTES_32);
+    component keyConcatHasher = Sha256(BYTES_84 + BYTES_16);
     keyConcatHasher.in <== wKeyAndSKeyConcat;
 
     // Hold the hash of the above in this.
@@ -82,7 +82,7 @@ template Withdrawal() {
         depositKey[i] = withdrawalkey[i];
     }
 
-    component depositKeyHasher = Keccak(BYTES_84, BYTES_32);
+    component depositKeyHasher = Sha256(BYTES_84);
     depositKeyHasher.in <== depositKey;
 
     // Hold the hash of the above in this.
@@ -108,20 +108,20 @@ template Withdrawal() {
     
     for (var i = 0; i < ARRAY_LEN; i++) {
         concaters[i] = Concatenator();
-        hashers[i] = Keccak(BYTES_64, BYTES_32);
-
-        concaters[i].direction <== validBits[i];
+        concaters[i].direction <== directions[i];
         concaters[i].firstHash <== currentHash;
         concaters[i].secondHash <== proof[i];
-
         currentConcat = concaters[i].concatHash;
 
+        hashers[i] = Sha256(BYTES_64);
         hashers[i].in <== currentConcat;
+
+        // Headache start.
         mask[i] = hashers[i].out;
-        lastHashIndex += validBits[i];
     }
     // STEP 3 END.
 
     // Final constraint.
-    // root === mask[lastHashIndex]; // Final error.
+    root === mask[0]; // Final error.
+    // Headache stop.
 }
