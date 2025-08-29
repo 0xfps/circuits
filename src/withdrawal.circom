@@ -1,7 +1,9 @@
 pragma circom 2.2.2;
 
-include "./concatenator.circom";
-include "../node_modules/circomlib/circuits/sha256/sha256.circom";
+include "../node_modules/keccak256-circom/circuits/keccak.circom";
+include "./hasher.circom";
+include "./converter.circom";
+include "./sort.circom";
 
 template Withdrawal() {
     var ARRAY_LEN = 32;
@@ -57,7 +59,7 @@ template Withdrawal() {
         wKeyAndSKeyConcat[insertIndex] = secretKey[i];
     }
 
-    component keyConcatHasher = Sha256(BYTES_84 + BYTES_16);
+    component keyConcatHasher = Keccak(BYTES_84 + BYTES_16, BYTES_32);
     keyConcatHasher.in <== wKeyAndSKeyConcat;
 
     // Hold the hash of the above in this.
@@ -82,7 +84,7 @@ template Withdrawal() {
         depositKey[i] = withdrawalkey[i];
     }
 
-    component depositKeyHasher = Sha256(BYTES_84);
+    component depositKeyHasher = Keccak(BYTES_84, BYTES_32);
     depositKeyHasher.in <== depositKey;
 
     // Hold the hash of the above in this.
@@ -98,8 +100,10 @@ template Withdrawal() {
     var currentHash[BYTES_32] = depositKeyHash;
     var currentConcat[BYTES_64];
     
-    component concaters[ARRAY_LEN];
+    component converters[ARRAY_LEN];
+    component sorters[ARRAY_LEN];
     component hashers[ARRAY_LEN];
+    component convertersToBits[ARRAY_LEN];
 
     // Store each has here and only increment the number
     // if the valid bit is positive.
@@ -107,17 +111,29 @@ template Withdrawal() {
     var mask[ARRAY_LEN][BYTES_32];
     
     for (var i = 0; i < ARRAY_LEN; i++) {
-        concaters[i] = Concatenator();
-        concaters[i].direction <== directions[i];
-        concaters[i].firstHash <== currentHash;
-        concaters[i].secondHash <== proof[i];
-        currentConcat = concaters[i].concatHash;
+        // Convert current hash and proof leaf to number for use in Poseidon hash.
+        converters[i] = ConverterToNum(BYTES_32);
+        converters[i].in[0] <== currentHash;
+        converters[i].in[1] <== proof[i];
 
-        hashers[i] = Sha256(BYTES_64);
-        hashers[i].in <== currentConcat;
+        var convertedNum[2] = converters[i].out;
 
-        // Headache start.
-        mask[i] = hashers[i].out;
+        // Sort converted numbers based on direction.
+        sorters[i] = Sort();
+        sorters[i].in <== convertedNum;
+        sorters[i].dir <== directions[i];
+
+        var sortedNums[2] = sorters[i].out;
+
+        // Hash the sorted numbers.
+        hashers[i] = HashLeftRight();
+        hashers[i].left <== sortedNums[0];
+        hashers[i].right <== sortedNums[1];
+
+        // Convert the output hash back to bits to be used in the next hash.
+        convertersToBits[i] = ConverterToBits(BYTES_32);
+        convertersToBits[i].in <== hashers[i].hash;
+        currentHash = convertersToBits[i].out;
     }
     // STEP 3 END.
 
