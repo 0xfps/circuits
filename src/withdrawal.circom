@@ -94,33 +94,29 @@ template Withdrawal() {
 
     // STEP 3 START.
     // This is where it gets quite complex.
-    // This index will keep track of where the last
-    // hash was stored.
-    var lastHashIndex = 0;
-    var currentHash[BYTES_32] = depositKeyHash;
-    var currentConcat[BYTES_64];
+    component currentHashToNumConverter = Bits2Num(BYTES_32);
+    currentHashToNumConverter.in <== depositKeyHash;
+    var currentHashInNum = currentHashToNumConverter.out;
     
     component converters[ARRAY_LEN];
     component sorters[ARRAY_LEN];
     component hashers[ARRAY_LEN];
     component convertersToBits[ARRAY_LEN];
-
-    // Store each has here and only increment the number
-    // if the valid bit is positive.
-    // I am so close to getting this.
-    var mask[ARRAY_LEN][BYTES_32];
     
     for (var i = 0; i < ARRAY_LEN; i++) {
         // Convert current hash and proof leaf to number for use in Poseidon hash.
-        converters[i] = ConverterToNum(BYTES_32);
-        converters[i].in[0] <== currentHash;
-        converters[i].in[1] <== proof[i];
+        converters[i] = Converter(BYTES_32);
+        converters[i].in <== proof[i];
 
-        var convertedNum[2] = converters[i].out;
+        var proofBitsInNumber = converters[i].out;
+
+        var sortInput[2];
+        sortInput[0] = currentHashInNum;
+        sortInput[1] = proofBitsInNumber;
 
         // Sort converted numbers based on direction.
         sorters[i] = Sort();
-        sorters[i].in <== convertedNum;
+        sorters[i].in <== sortInput;
         sorters[i].dir <== directions[i];
 
         var sortedNums[2] = sorters[i].out;
@@ -130,14 +126,12 @@ template Withdrawal() {
         hashers[i].left <== sortedNums[0];
         hashers[i].right <== sortedNums[1];
 
-        // Convert the output hash back to bits to be used in the next hash.
-        convertersToBits[i] = ConverterToBits(BYTES_32);
-        convertersToBits[i].in <== hashers[i].hash;
-        currentHash = convertersToBits[i].out;
+        // Store the latest hash.
+        currentHashInNum = hashers[i].hash;
     }
     // STEP 3 END.
 
     // Final constraint.
-    root === mask[0]; // Final error.
+    // ???
     // Headache stop.
 }
