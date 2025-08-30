@@ -97,7 +97,8 @@ template Withdrawal() {
     component currentHashToNumConverter = Bits2Num(BYTES_32);
     currentHashToNumConverter.in <== depositKeyHash;
     // Board L1.
-    var currentHashInNum = currentHashToNumConverter.out;
+    signal currentHashInNum[ARRAY_LEN + 1];
+    currentHashInNum[0] <-- currentHashToNumConverter.out;
     
     component converters[ARRAY_LEN];
     component sorters[ARRAY_LEN];
@@ -105,7 +106,8 @@ template Withdrawal() {
     component convertersToBits[ARRAY_LEN];
 
     // Board L2.
-    var lastPoseidonHashAdded = 0;
+    signal lastPoseidonHashAdded[ARRAY_LEN + 1];
+    lastPoseidonHashAdded[0] <-- 0;
     
     for (var i = 0; i < ARRAY_LEN; i++) {
         // Convert current hash and proof leaf to number for use in Poseidon hash.
@@ -115,7 +117,7 @@ template Withdrawal() {
         var proofBitsInNumber = converters[i].out;
 
         // Board L4.
-        var previousHash = currentHashInNum - lastPoseidonHashAdded;
+        var previousHash = currentHashInNum[i] - lastPoseidonHashAdded[i];
 
         var sortInput[2];
         sortInput[0] = previousHash;
@@ -136,8 +138,8 @@ template Withdrawal() {
         // Store the latest hash.
         // Board L5.
         // These two lines yield problems.
-        // currentHashInNum = previousHash + (hashers[i].hash * validBits[i]);
-        // lastPoseidonHashAdded = previousHash * validBits[i];
+        currentHashInNum[i + 1] <-- previousHash + (hashers[i].hash * validBits[i]);
+        lastPoseidonHashAdded[i + 1] <-- previousHash * validBits[i];
     }
     // STEP 3 END.
 
@@ -148,6 +150,6 @@ template Withdrawal() {
     signal rootInNum <-- rootToNumConverter.out;
 
     // Final constraint.
-    rootInNum === currentHashInNum - lastPoseidonHashAdded;
+    rootInNum === currentHashInNum[32] - lastPoseidonHashAdded[32];
     // Headache stop.
 }
