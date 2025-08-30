@@ -13,7 +13,7 @@ template Withdrawal() {
     var BYTES_64 = 64 * 8;
     var BYTES_84 = 84 * 8;
 
-    // Merkle root, 32 bytes, computed with SHA256.
+    // Merkle root, 32 bytes, computed with Poseidon.
     signal input root[BYTES_32];
     // User's secret key, a string of 16 characters, 16 bytes.
     // On the UI, it will be converted from a 16 character string
@@ -96,12 +96,16 @@ template Withdrawal() {
     // This is where it gets quite complex.
     component currentHashToNumConverter = Bits2Num(BYTES_32);
     currentHashToNumConverter.in <== depositKeyHash;
+    // Board L1.
     var currentHashInNum = currentHashToNumConverter.out;
     
     component converters[ARRAY_LEN];
     component sorters[ARRAY_LEN];
     component hashers[ARRAY_LEN];
     component convertersToBits[ARRAY_LEN];
+
+    // Board L2.
+    var lastPoseidonHashAdded = 0;
     
     for (var i = 0; i < ARRAY_LEN; i++) {
         // Convert current hash and proof leaf to number for use in Poseidon hash.
@@ -110,8 +114,11 @@ template Withdrawal() {
 
         var proofBitsInNumber = converters[i].out;
 
+        // Board L4.
+        var previousHash = currentHashInNum - lastPoseidonHashAdded;
+
         var sortInput[2];
-        sortInput[0] = currentHashInNum;
+        sortInput[0] = previousHash;
         sortInput[1] = proofBitsInNumber;
 
         // Sort converted numbers based on direction.
@@ -127,11 +134,20 @@ template Withdrawal() {
         hashers[i].right <== sortedNums[1];
 
         // Store the latest hash.
-        currentHashInNum = hashers[i].hash;
+        // Board L5.
+        // These two lines yield problems.
+        // currentHashInNum = previousHash + (hashers[i].hash * validBits[i]);
+        // lastPoseidonHashAdded = previousHash * validBits[i];
     }
     // STEP 3 END.
 
+    // STEP 4
+    // Convert root to number;
+    component rootToNumConverter = Bits2Num(BYTES_32);
+    rootToNumConverter.in <== root;
+    signal rootInNum <-- rootToNumConverter.out;
+
     // Final constraint.
-    // ???
+    rootInNum === currentHashInNum - lastPoseidonHashAdded;
     // Headache stop.
 }
