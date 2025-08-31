@@ -36,7 +36,6 @@ template Withdrawal() {
 
     // This signal holds tiny info when needed;
     // Signal? Variable?
-    // Var for now. @todo Consider changing these.
     // This holds the re-computed deposit key.
     var depositKey[BYTES_84];
     // This holds the concatenated withdrawalkey and secret key.
@@ -63,7 +62,6 @@ template Withdrawal() {
     keyConcatHasher.in <== wKeyAndSKeyConcat;
 
     // Hold the hash of the above in this.
-    // @note THIS IS NOT A CONSTRAINT!
     signal wKeyAndSKeyConcatHash[BYTES_32] <-- keyConcatHasher.out;
     // STEP 1 END.
 
@@ -88,7 +86,6 @@ template Withdrawal() {
     depositKeyHasher.in <== depositKey;
 
     // Hold the hash of the above in this.
-    // @note THIS IS NOT A CONSTRAINT!
     signal depositKeyHash[BYTES_32] <-- depositKeyHasher.out;
     // STEP 2 END.
 
