@@ -20,7 +20,7 @@ template Withdrawal() {
     // to hex to buffer to uint8 to bits.
     signal input secretKey[BYTES_16];
     // Withdrawal key, an 84 byte hex.
-    signal input withdrawalkey[BYTES_84];
+    signal input withdrawalKey[BYTES_84];
     // Merkle Proof formatted for Circom already.
     // 32 arrays, all containing 32-byte info in bits.
     signal input proof[ARRAY_LEN][BYTES_32];
@@ -31,14 +31,11 @@ template Withdrawal() {
     // Wherever 0 starts, the loop stops.
     signal input validBits[ARRAY_LEN];
 
-    // Just like the contract, hashes will be kept in levels.
-    signal input levelHash[ARRAY_LEN][BYTES_32];
-
     // This signal holds tiny info when needed;
     // Signal? Variable?
     // This holds the re-computed deposit key.
     var depositKey[BYTES_84];
-    // This holds the concatenated withdrawalkey and secret key.
+    // This holds the concatenated withdrawalKey and secret key.
     var wKeyAndSKeyConcat[BYTES_84 + BYTES_16];
 
     // STEP 1 START.
@@ -47,7 +44,7 @@ template Withdrawal() {
     // On the smart contract, encodePacked, here, concatenated.
     // First, copy all withdrawal key values into the concat.
     for (var i = 0; i < BYTES_84; i++) {
-        wKeyAndSKeyConcat[i] = withdrawalkey[i];
+        wKeyAndSKeyConcat[i] = withdrawalKey[i];
     }
 
     // Copy the secret key.
@@ -79,7 +76,7 @@ template Withdrawal() {
     // Built out of the withdrawal key.
     // This will be used for the merkle root computation.
     for (var i = BYTES_32; i < BYTES_84; i++) {
-        depositKey[i] = withdrawalkey[i];
+        depositKey[i] = withdrawalKey[i];
     }
 
     component depositKeyHasher = Keccak(BYTES_84, BYTES_32);
