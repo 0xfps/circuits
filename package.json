@@ -9,7 +9,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@fifteenfigures/mini-merkle-tree": "^0.0.17",
+    "@fifteenfigures/mini-merkle-tree": "^0.0.18",
     "@zk2/ffjavascript": "^0.2.57",
     "hexyjs": "^2.1.4",
     "keccak256-circom": "git+https://github.com/vocdoni/keccak256-circom",

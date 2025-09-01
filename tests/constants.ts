@@ -1,13 +1,8 @@
-import { bytesToBits, smolPadding } from "@fifteenfigures/mini-merkle-tree"
-import { F1Field } from "@zk2/ffjavascript"
+import { standardizeToPoseidon } from "@fifteenfigures/mini-merkle-tree"
 import { keccak256 } from "ethers"
 import { strToHex } from "hexyjs"
-import { poseidon } from "poseidon-hash"
-import { toNum } from "./bits"
-import { convertToValidPoseidon } from "./convert-to-valid-circom-poseidon"
 
 export const prime = 21888242871839275222246405745257275088548364400416034343698204186575808495617n
-const field = new F1Field(prime)
 
 export const secretKey = "mysecretkeythere"
 export const address = "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4"
@@ -18,4 +13,4 @@ export const depositKey = "0x1a10edf08a5329488719ab829e94bc295e97016dbe4dee1f5a2
 export const withdrawalKeyConcat = `${withdrawalKey}${strToHex(secretKey)}`
 
 export const depositkeyHash = keccak256(depositKey)
-export const depositkeyHashInTree = convertToValidPoseidon(depositKey)
+export const depositkeyHashInTree = standardizeToPoseidon(depositKey)
