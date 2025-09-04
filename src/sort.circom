@@ -1,5 +1,6 @@
 pragma circom 2.2.2;
 
+// Sorts and returns two numbers based on dir.
 // if dir == 0 returns [in[0], in[1]]
 // if dir == 1 returns [in[1], in[0]]
 template Sort() {

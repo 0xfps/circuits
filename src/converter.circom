@@ -2,6 +2,7 @@ pragma circom  2.2.2;
 
 include "../node_modules/circomlib/circuits/bitify.circom";
 
+// Converts bits to number.
 template Converter(bits) {
     signal input in[bits];
     signal output out;

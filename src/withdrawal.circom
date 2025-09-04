@@ -5,6 +5,14 @@ include "./hasher.circom";
 include "./converter.circom";
 include "./sort.circom";
 
+/**
+ * Withdrawal Circuit.
+ *
+ * Given a root, secret key, withdrawal key and merkle proof, this circuit
+ * validates that, the deposit key, when computed from the withdrawal key
+ * and the secret, and when hashed, is a valid leaf that when applied to the
+ * merkle proof will give the passed root.
+ */
 template Withdrawal() {
     var ARRAY_LEN = 32;
 
@@ -47,7 +55,7 @@ template Withdrawal() {
         wKeyAndSKeyConcat[i] = withdrawalKey[i];
     }
 
-    // Copy the secret key.
+    // Copy the secret key into the concat.
     // 0 - 83 is occupied.
     // Start from 84.
     for (var i = 0; i < BYTES_16; i++) {
@@ -88,6 +96,18 @@ template Withdrawal() {
 
     // STEP 3 START.
     // This is where it gets quite complex.
+    // Hashes are stored in an array, with an addition of the 
+    // previous hash * the valid bit (1 or 0).
+    // If the valid bit is 1, the previous hash is added to the
+    // current hash, and deducted when about to be used.
+    // If the valid bit is 0, nothing is added to the current hash
+    // and when 0 is deducted, the current hash still remains.
+    // By adding the previous hash * valid bit, I can pile up
+    // hashes and add 0 or a known hash given the status of a valid
+    // bit.
+    // In the end, the most recent hash is the subtraction of the
+    // last current hash and the last added poseidon number.
+    // That is the root.
     component currentHashToNumConverter = Bits2Num(BYTES_32);
     currentHashToNumConverter.in <== depositKeyHash;
     // Board L1.
