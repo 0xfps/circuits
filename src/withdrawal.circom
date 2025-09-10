@@ -38,6 +38,10 @@ template Withdrawal() {
     // Valid bits, an array with 1s and 0s, control array.
     // Wherever 0 starts, the loop stops.
     signal input validBits[ARRAY_LEN];
+    // Special number used as nullifier.
+    signal input nullifier;
+    // Nullifier hash.
+    signal input nullifierHash[BYTES_32];
 
     // This signal holds tiny info when needed;
     // Signal? Variable?
@@ -157,13 +161,26 @@ template Withdrawal() {
     }
     // STEP 3 END.
 
-    // STEP 4
+    // STEP 4.
     // Convert root to number;
     component rootToNumConverter = Bits2Num(BYTES_32);
     rootToNumConverter.in <== root;
     signal rootInNum <-- rootToNumConverter.out;
 
+    // STEP 5.
+    // Hash nullifier.
+    component nullHasher = Hash();
+    nullHasher.in <== nullifier;
+    signal outputNullHash <-- nullHasher.hash;
+
+    // STEP 6.
+    // Convert nullifier hash into number.
+    component nullHashToNumConverter = Bits2Num(BYTES_32);
+    nullHashToNumConverter.in <== nullifierHash;
+    signal nullHashInNum <-- nullHashToNumConverter.out;
+
     // Final constraint.
     rootInNum === currentHashInNum[32] - lastPoseidonHashAdded[32];
+    outputNullHash === nullHashInNum;
     // Headache stop.
 }

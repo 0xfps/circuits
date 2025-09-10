@@ -2,6 +2,16 @@ pragma circom 2.2.2;
 
 include "../node_modules/circomlib/circuits/poseidon.circom";
 
+template Hash() {
+    signal input in;
+    signal output hash;
+
+    component hasher = Poseidon(1);
+    hasher.inputs[0] <== in;
+    
+    hash <== hasher.out;
+}
+
 template HashLeftRight() {
     signal input left;
     signal input right;
