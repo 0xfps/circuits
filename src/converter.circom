@@ -11,3 +11,12 @@ template Converter(bits) {
     converter.in <== in;
     out <== converter.out;
 }
+
+template ConvertToBits(bitsOut) {
+    signal input in;
+    signal output out[bitsOut];
+
+    component converter = Num2Bits(bitsOut);
+    converter.in <== in;
+    out <== converter.out;
+}

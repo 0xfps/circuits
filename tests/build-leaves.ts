@@ -1,6 +1,6 @@
 import { AbiCoder } from "ethers";
 import { depositkeyHashInTree } from "./constants";
-import { standardizeToPoseidon } from "@fifteenfigures/mini-merkle-tree";
+import { standardizeToPoseidon } from "@fifteenfigures/tiny-merkle-tree";
 
 export function buildLeaves(): string[] {
     const leaves = [depositkeyHashInTree]

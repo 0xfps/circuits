@@ -1,4 +1,4 @@
-import { smolPadding } from "@fifteenfigures/mini-merkle-tree";
+import { smolPadding } from "@fifteenfigures/tiny-merkle-tree";
 import { toNum } from "./bits";
 import { computeProofForCircom } from "./tree";
 import { poseidon } from "poseidon-hash";
@@ -19,7 +19,7 @@ console.log(comp.tree.verifyProof(comp.leaf, comp.merkleProof))
 const { proof, directions } = comp.merkleProof
 
 let currentHash = leaf
-proof.forEach(function (currentLeaf, i) {
+proof.forEach(function (currentLeaf: any, i: any) {
     if (directions[i]) {
         currentHash = poseidon([currentLeaf, currentHash])
     } else currentHash = poseidon([currentHash, currentLeaf])

@@ -1,4 +1,4 @@
-import { bytesToBits } from "@fifteenfigures/mini-merkle-tree";
+import { bytesToBits } from "@fifteenfigures/tiny-merkle-tree";
 import { computeProofForCircom } from "../../tree";
 import { depositKey, depositkeyHash, depositkeyHashInTree, prime } from "../../constants";
 import { writeFileSync } from "fs";

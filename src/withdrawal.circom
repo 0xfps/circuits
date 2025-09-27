@@ -1,6 +1,5 @@
 pragma circom 2.2.2;
 
-include "../node_modules/keccak256-circom/circuits/keccak.circom";
 include "./hasher.circom";
 include "./converter.circom";
 include "./sort.circom";
@@ -67,11 +66,14 @@ template Withdrawal() {
         wKeyAndSKeyConcat[insertIndex] = secretKey[i];
     }
 
-    component keyConcatHasher = Keccak(BYTES_84 + BYTES_16, BYTES_32);
-    keyConcatHasher.in <== wKeyAndSKeyConcat;
+    component wKeyAndSKeyConcatToNum = Bits2Num(BYTES_84 + BYTES_16);
+    wKeyAndSKeyConcatToNum.in <== wKeyAndSKeyConcat;
 
-    // Hold the hash of the above in this.
-    signal wKeyAndSKeyConcatHash[BYTES_32] <-- keyConcatHasher.out;
+    signal wKeyAndSKeyConcatInNum <-- wKeyAndSKeyConcatToNum.out;
+
+    component wKeyAndSKeyConcatInNumToBits = ConvertToBits(BYTES_32);
+    wKeyAndSKeyConcatInNumToBits.in <== wKeyAndSKeyConcatInNum;
+    signal wKeyAndSKeyConcatInNumInBits[BYTES_32] <-- wKeyAndSKeyConcatInNumToBits.out;
     // STEP 1 END.
 
     // STEP 2 START.
@@ -79,7 +81,7 @@ template Withdrawal() {
     // This will occupy the first 32 bytes.
     // 0 - 31.
     for (var i = 0; i < BYTES_32; i++) {
-        depositKey[i] = wKeyAndSKeyConcatHash[i];
+        depositKey[i] = wKeyAndSKeyConcatInNumInBits[i];
     }
 
     // For 32 - 83.
@@ -91,11 +93,11 @@ template Withdrawal() {
         depositKey[i] = withdrawalKey[i];
     }
 
-    component depositKeyHasher = Keccak(BYTES_84, BYTES_32);
-    depositKeyHasher.in <== depositKey;
+    component depositKeyStandardizer = Bits2Num(BYTES_84);
+    depositKeyStandardizer.in <== depositKey;
 
     // Hold the hash of the above in this.
-    signal depositKeyHash[BYTES_32] <-- depositKeyHasher.out;
+    signal standardizedDepositKey <-- depositKeyStandardizer.out;
     // STEP 2 END.
 
     // STEP 3 START.
@@ -112,11 +114,10 @@ template Withdrawal() {
     // In the end, the most recent hash is the subtraction of the
     // last current hash and the last added poseidon number.
     // That is the root.
-    component currentHashToNumConverter = Bits2Num(BYTES_32);
-    currentHashToNumConverter.in <== depositKeyHash;
+
     // Board L1.
     signal currentHashInNum[ARRAY_LEN + 1];
-    currentHashInNum[0] <-- currentHashToNumConverter.out;
+    currentHashInNum[0] <-- standardizedDepositKey;
     
     component converters[ARRAY_LEN];
     component sorters[ARRAY_LEN];
