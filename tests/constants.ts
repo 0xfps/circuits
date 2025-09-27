@@ -30,8 +30,10 @@ const keys = generatekeys(address, BigInt(amount), secretKey)
 export const withdrawalKey = keys.withdrawalKey
 // "0xb43deb28cafba1907cdda5f986bf407a19185e3ef4f1cc39cb8c71ca9dceebf65B38Da6a701c568545dCfcB03FcB875f56beddC40000000000000000000000000000000000000000000000000000000000000064"
 export const depositKey = keys.depositKey
-"0x1bdb6d0aa61d10bf55d1e88691ead24222cbb336756feca1b133ef78b143a1c75B38Da6a701c568545dCfcB03FcB875f56beddC40000000000000000000000000000000000000000000000000000000000000064"
+// "0x1bdb6d0aa61d10bf55d1e88691ead24222cbb336756feca1b133ef78b143a1c75B38Da6a701c568545dCfcB03FcB875f56beddC40000000000000000000000000000000000000000000000000000000000000064"
 export const withdrawalKeyConcat = `${withdrawalKey}${strToHex(secretKey)}`
+
+console.log(withdrawalKey.length, depositKey.length)
 
 console.log({ nnn: BigInt(standardizeToPoseidon(withdrawalKeyConcat)) })
 

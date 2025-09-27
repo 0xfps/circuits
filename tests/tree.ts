@@ -1,4 +1,4 @@
-import MiniMerkleTree, { bitsToNum, bytesToBits, convertProofToBits, formatForCircom, getRandomNullifier, hashNums, smolPadding, standardizeToPoseidon } from "@fifteenfigures/tiny-merkle-tree";
+import MiniMerkleTree, { bitsToNum, bytesToBits, convertProofToBits, formatForCircom, getInputObjects, getRandomNullifier, hashNums, smolPadding, standardizeToPoseidon } from "@fifteenfigures/tiny-merkle-tree";
 import { buildLeaves } from "./build-leaves";
 import { depositKey, depositkeyHashInTree, kkk, secretKey, withdrawalKey, withdrawalKeyConcat } from "./constants";
 import { strToHex } from "hexyjs";
@@ -19,18 +19,24 @@ export function computeProofForCircom() {
     const nullHash = hashNums([nullifier])
     const nullifierHash = convertProofToBits(nullHash)
 
+    const outputs = getInputObjects(withdrawalKey, standardizeToPoseidon(depositKey), secretKey, tree)
+
     // console.log({ nullifier, nullHash })
 
-    writeFileSync("input.json", JSON.stringify({
-        root,
-        withdrawalKey: withdrawalKeyBits,
-        secretKey: secretKeyBits,
-        directions,
-        validBits,
-        proof,
-        nullifier,
-        nullifierHash
-    }))
+    // writeFileSync("input.json", JSON.stringify({
+    //     root,
+    //     withdrawalKey: withdrawalKeyBits,
+    //     secretKey: secretKeyBits,
+    //     directions,
+    //     validBits,
+    //     proof,
+    //     nullifier,
+    //     nullifierHash
+    // }))
+
+    // OR
+
+    writeFileSync("input.json", JSON.stringify(outputs))
 
 
     // const w = bytesToBits(new Uint8Array(Buffer.from(withdrawalKeyConcat.slice(2), "hex")))
@@ -59,7 +65,7 @@ export function computeProofForCircom() {
     const wKeyBits = bytesToBits(new Uint8Array(Buffer.from(stdWKey.slice(2), "hex")))
     console.log(toNum(wKeyBits))
     const metadata = bytesToBits(new Uint8Array(Buffer.from(withdrawalKey.slice(66), "hex")))
- 
+
     const con = [...wKeyBits, ...metadata]
 
     const desiredWKey = `0x${toNum(wKeyBits).toString(16)}${withdrawalKey.slice(66)}`

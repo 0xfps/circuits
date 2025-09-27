@@ -11,7 +11,7 @@ node generate_witness main.wasm ../input.json witness.wtns
 cd ..
 
 # Phase 1.
-snarkjs powersoftau new bn128 20 outputs/main.ptau -v
+snarkjs powersoftau new bn128 15 outputs/main.ptau -v
 snarkjs powersoftau contribute outputs/main.ptau outputs/main2.ptau --name="ATTP Default Contribution 2" -v
 
 # Phase 2.
