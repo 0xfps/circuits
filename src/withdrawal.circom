@@ -21,13 +21,19 @@ template Withdrawal() {
     var BYTES_84 = 84 * 8;
 
     // Merkle root, 32 bytes, computed with Poseidon.
-    signal input root[BYTES_32];
+    // This is within mod.
+    signal input root;
     // User's secret key, a string of 16 characters, 16 bytes.
-    // On the UI, it will be converted from a 16 character string
-    // to hex to buffer to uint8 to bits.
-    signal input secretKey[BYTES_16];
-    // Withdrawal key, an 84 byte hex.
-    signal input withdrawalKey[BYTES_84];
+    // Assumed to be the number equivalent.
+    signal input secretKey;
+
+    // First part of the withdrawal key, the hash.
+    // The hash is computed with Poseidon. It is within mod.
+    signal input withdrawalKeyNumPart1;
+    // Second part of the withdrawal key, the address.
+    signal input withdrawalKeyNumPart2;
+    // The amount, in uint, it's uint224.
+    signal input withdrawalKeyNumPart3;
     // Merkle Proof formatted for Circom already.
     // 32 arrays, all containing 32-byte info in bits.
     signal input proof[ARRAY_LEN][BYTES_32];
@@ -42,82 +48,22 @@ template Withdrawal() {
     // Nullifier hash.
     signal input nullifierHash[BYTES_32];
 
-    // This signal holds tiny info when needed;
-    // Signal? Variable?
-    // This holds the re-computed deposit key.
-    var depositKey[BYTES_84];
-    // This holds the concatenated withdrawalKey and secret key.
-    var wKeyAndSKeyConcat[BYTES_84 + BYTES_16];
+    component depositKeyKeyHash = HashMul(4);
+    depositKeyKeyHash.in[0] <== withdrawalKeyNumPart1;
+    depositKeyKeyHash.in[1] <== withdrawalKeyNumPart2;
+    depositKeyKeyHash.in[2] <== withdrawalKeyNumPart3;
+    depositKeyKeyHash.in[3] <== secretKey;
+    signal depositKey <-- depositKeyKeyHash.hash;
 
-    // STEP 1 START.
-    // Intermediate signals will hold the result of every step.
-    // Recompute deposit key.
-    // On the smart contract, encodePacked, here, concatenated.
-    // First, copy all withdrawal key values into the concat.
-    for (var i = 0; i < BYTES_84; i++) {
-        wKeyAndSKeyConcat[i] = withdrawalKey[i];
-    }
-
-    // Copy the secret key into the concat.
-    // 0 - 83 is occupied.
-    // Start from 84.
-    for (var i = 0; i < BYTES_16; i++) {
-        var insertIndex = BYTES_84 + i;
-        wKeyAndSKeyConcat[insertIndex] = secretKey[i];
-    }
-
-    component wKeyAndSKeyConcatToNum = Bits2Num(BYTES_84 + BYTES_16);
-    wKeyAndSKeyConcatToNum.in <== wKeyAndSKeyConcat;
-
-    signal wKeyAndSKeyConcatInNum <-- wKeyAndSKeyConcatToNum.out;
-
-    component wKeyAndSKeyConcatInNumToBits = ConvertToBits(BYTES_32);
-    wKeyAndSKeyConcatInNumToBits.in <== wKeyAndSKeyConcatInNum;
-    signal wKeyAndSKeyConcatInNumInBits[BYTES_32] <-- wKeyAndSKeyConcatInNumToBits.out;
-    // STEP 1 END.
-
-    // STEP 2 START.
-    // Copy the hash to the deposit key.
-    // This will occupy the first 32 bytes.
-    // 0 - 31.
-    for (var i = 0; i < BYTES_32; i++) {
-        depositKey[i] = wKeyAndSKeyConcatInNumInBits[i];
-    }
-
-    // For 32 - 83.
-    // Copy the last 52 bytes of the withdrawal key.
-    // Now we have a complete 84 byte deposit key.
-    // Built out of the withdrawal key.
-    // This will be used for the merkle root computation.
-    for (var i = BYTES_32; i < BYTES_84; i++) {
-        depositKey[i] = withdrawalKey[i];
-    }
-
-    component depositKeyStandardizer = Bits2Num(BYTES_84);
-    depositKeyStandardizer.in <== depositKey;
-
-    // Hold the hash of the above in this.
-    signal standardizedDepositKey <-- depositKeyStandardizer.out;
-    // STEP 2 END.
-
-    // STEP 3 START.
-    // This is where it gets quite complex.
-    // Hashes are stored in an array, with an addition of the 
-    // previous hash * the valid bit (1 or 0).
-    // If the valid bit is 1, the previous hash is added to the
-    // current hash, and deducted when about to be used.
-    // If the valid bit is 0, nothing is added to the current hash
-    // and when 0 is deducted, the current hash still remains.
-    // By adding the previous hash * valid bit, I can pile up
-    // hashes and add 0 or a known hash given the status of a valid
-    // bit.
-    // In the end, the most recent hash is the subtraction of the
-    // last current hash and the last added poseidon number.
-    // That is the root.
+    component leafHasher = HashMul(3);
+    leafHasher.in[0] <== depositKey;
+    leafHasher.in[1] <== withdrawalKeyNumPart2;
+    leafHasher.in[2] <== withdrawalKeyNumPart3;
+    signal leaf <-- leafHasher.hash;
 
     // Board L1.
     signal currentHashInNum[ARRAY_LEN + 1];
-    currentHashInNum[0] <-- standardizedDepositKey;
+    currentHashInNum[0] <-- leaf;
     
     component converters[ARRAY_LEN];
     component sorters[ARRAY_LEN];
@@ -162,12 +108,6 @@ template Withdrawal() {
     }
     // STEP 3 END.
 
-    // STEP 4.
-    // Convert root to number;
-    component rootToNumConverter = Bits2Num(BYTES_32);
-    rootToNumConverter.in <== root;
-    signal rootInNum <-- rootToNumConverter.out;
-
     // STEP 5.
     // Hash nullifier.
     component nullHasher = Hash();
@@ -181,7 +121,7 @@ template Withdrawal() {
     signal nullHashInNum <-- nullHashToNumConverter.out;
 
     // Final constraint.
-    rootInNum === currentHashInNum[32] - lastPoseidonHashAdded[32];
+    root === currentHashInNum[32] - lastPoseidonHashAdded[32];
     outputNullHash === nullHashInNum;
     // Headache stop.
 }

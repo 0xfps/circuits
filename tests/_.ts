@@ -1,56 +1,66 @@
-import { smolPadding } from "@fifteenfigures/tiny-merkle-tree";
-import { toNum } from "./bits";
-import { computeProofForCircom } from "./tree";
-import { poseidon } from "poseidon-hash";
-import { F1Field } from "@zk2/ffjavascript";
-import { prime } from "./constants";
+import TinyMerkleTree, { bitsToNum, convertProofToBits, formatForCircom, generatekeys, getRandomNullifier, hashNums, smolPadding, standardizeToPoseidon } from "@fifteenfigures/tiny-merkle-tree"
+import { AbiCoder } from "ethers"
+import { writeFileSync } from "fs"
+import { strToHex } from "hexyjs"
+import { poseidon } from "poseidon-hash"
+import RandomString from "randomstring"
 
-const comp = computeProofForCircom()
-let leaf = BigInt(comp.leaf)
-let addition = 0n
+export const secretKey = RandomString.generate({ length: 16, charset: "alphanumeric" })
+export const address = "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4"
+export const amount = 100n
 
-console.log("Starting Leaf", leaf);
-console.log(BigInt(comp.root))
-console.log(comp.root)
-console.log(comp.tree)
+export function extractKeyMetadata(key: string) {
+    // Including 0x, bytes32 stretches to 66 characters.
+    const keyHash = key.slice(0, 66)
+    const asset = `0x${key.slice(66, 106)}`
+    const amount = BigInt(`0x${key.slice(106)}`)
+    const amountU32 = `0x${key.slice(106)}`
 
-console.log(comp.tree.verifyProof(comp.leaf, comp.merkleProof))
-
-const { proof, directions } = comp.merkleProof
-
-let currentHash = leaf
-proof.forEach(function (currentLeaf: any, i: any) {
-    if (directions[i]) {
-        currentHash = poseidon([currentLeaf, currentHash])
-    } else currentHash = poseidon([currentHash, currentLeaf])
-})
-
-console.log({ currentHash })
-console.log(currentHash.toString(16))
-
-for (let i = 0; i < comp.merkleProof.proof.length; i++) {
-    const prevLeaf = leaf - addition
-    const firstProof = comp.proof[i]
-    const firstProofNum = smolPadding(`0x${toNum(firstProof).toString(16)}`)
-    const [leaf1, leaf2] = comp.directions[i] == 0 ? [prevLeaf, firstProofNum] : [firstProofNum, prevLeaf]
-    addition = BigInt(leaf)
-    const hash = poseidon([leaf1, leaf2])
-    leaf = hash + BigInt(leaf)
-
-    console.log({
-        i,
-        currentLeaf: leaf,
-        addition,
-        prevLeaf,
-        nextLeaf: BigInt(firstProofNum),
-        hash
-    })
-    // console.log(BigInt(firstProof))
-
-    // const firstProofBuffer = Buffer.from(firstProof.slice(2, firstProof.length), "hex").reverse()
-    // const fPArray = new Uint8Array(firstProofBuffer)
-    // const fPArrayBits = bytesToBits(fPArray)
-    // console.log(i, "==>", toNum(fPArrayBits))
-    // console.log(toNum(comp.rootBits.reverse()))
-
+    return { keyHash, asset, amountU32, amount }
 }
+
+const leaves = []
+
+const keys = generatekeys(address, amount, secretKey)
+const { keyHash, asset, amountU32 } = extractKeyMetadata(keys.withdrawalKey)
+const { keyHash: dKeyHash } = extractKeyMetadata(keys.depositKey)
+
+const dKeyBigInt = BigInt(dKeyHash)
+const wKeyBigInt = BigInt(keyHash)
+const assetBigInt = BigInt(asset)
+const amountBigInt = BigInt(amountU32)
+const secretKeyBigInt = BigInt(`0x${strToHex(secretKey)}`)
+
+const leafNum = poseidon([dKeyBigInt, assetBigInt, amountBigInt])
+const leaf = smolPadding(`0x${leafNum.toString(16)}`)
+leaves.push(leaf)
+
+function buildLeaves() {
+    for (let i = 0; i < 15; i++) {
+        const encoding = new AbiCoder().encode(["string"], [i.toString()])
+        leaves.push(standardizeToPoseidon(encoding))
+    }
+}
+
+buildLeaves()
+
+const tree = new TinyMerkleTree(leaves)
+const root = bitsToNum(convertProofToBits(tree.root))
+const merkleProof = tree.generateMerkleProof(leaf)
+const { proof, directions, validBits } = formatForCircom(merkleProof)
+const nullifier = getRandomNullifier()
+const nullHash = hashNums([nullifier])
+const nullifierHash = convertProofToBits(nullHash)
+
+writeFileSync("input.json", JSON.stringify({
+    root: root.toString(),
+    withdrawalKeyNumPart1: wKeyBigInt.toString(),
+    withdrawalKeyNumPart2: assetBigInt.toString(),
+    withdrawalKeyNumPart3: amountBigInt.toString(),
+    secretKey: secretKeyBigInt.toString(),
+    directions,
+    validBits,
+    proof,
+    nullifier,
+    nullifierHash
+}))

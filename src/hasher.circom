@@ -12,6 +12,19 @@ template Hash() {
     hash <== hasher.out;
 }
 
+template HashMul(num) {
+    signal input in[num];
+    signal output hash;
+
+    component hasher = Poseidon(num);
+    
+    for (var i = 0; i < num; i++) {
+        hasher.inputs[i] <== in[i];
+    }
+
+    hash <== hasher.out;
+}
+
 template HashLeftRight() {
     signal input left;
     signal input right;

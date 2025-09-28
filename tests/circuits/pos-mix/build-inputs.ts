@@ -14,7 +14,7 @@ const field = new F1Field(prime)
 
 const withdrawalKeyReduced = field.e(BigInt(withdrawalKeyConcat))
 const withdawakKeyReducedHash = `0x${withdrawalKeyReduced.toString(16)}`
-console.log(field.e(BigInt(keccak256(withdawakKeyReducedHash))))
+// console.log(field.e(BigInt(keccak256(withdawakKeyReducedHash))))
 
 const preImage = "0x7B274238171D580267d0E9cB52469173682f8b1267d0E9cB52469173682f8b12"
 const preImageBuf = Buffer.from(preImage.slice(2, preImage.length), "hex").reverse()

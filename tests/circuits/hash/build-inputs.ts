@@ -10,17 +10,17 @@ import { keccak256 } from "ethers";
 const { secretKeyBits, withdrawalKeyBits } = computeProofForCircom()
 const depositKeyHashBits = bytesToBits(new Uint8Array(Buffer.from(depositkeyHash.slice(2, depositkeyHash.length), "hex")))
 
-console.log(depositkeyHash)
-console.log(BigInt(depositkeyHash))
-console.log(toNum(depositKeyHashBits))
+// console.log(depositkeyHash)
+// console.log(BigInt(depositkeyHash))
+// console.log(toNum(depositKeyHashBits))
 
 const reduced = new F1Field(prime).e(toNum(depositKeyHashBits))
 const reducedHex = `0x${reduced.toString(16)}`
 
-console.log(reduced)
-console.log(reducedHex)
-console.log(BigInt(reducedHex))
-console.log(depositkeyHashInTree)
+// console.log(reduced)
+// console.log(reducedHex)
+// console.log(BigInt(reducedHex))
+// console.log(depositkeyHashInTree)
 
 writeFileSync(path.join(__dirname, "input.json"), JSON.stringify({
     withdrawalKey: withdrawalKeyBits,
