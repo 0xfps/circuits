@@ -36,7 +36,7 @@ template Withdrawal() {
     signal input withdrawalKeyNumPart3;
     // Merkle Proof formatted for Circom already.
     // 32 arrays, all containing 32-byte info in bits.
-    signal input proof[ARRAY_LEN][BYTES_32];
+    signal input proof[ARRAY_LEN];
     // Direction each 32 byte array will go to the subsequent
     // hash.
     signal input directions[ARRAY_LEN];
@@ -46,7 +46,7 @@ template Withdrawal() {
     // Special number used as nullifier.
     signal input nullifier;
     // Nullifier hash.
-    signal input nullifierHash[BYTES_32];
+    signal input nullifierHash;
 
     component depositKeyKeyHash = HashMul(4);
     depositKeyKeyHash.in[0] <== withdrawalKeyNumPart1;
@@ -75,11 +75,7 @@ template Withdrawal() {
     lastPoseidonHashAdded[0] <-- 0;
     
     for (var i = 0; i < ARRAY_LEN; i++) {
-        // Convert current hash and proof leaf to number for use in Poseidon hash.
-        converters[i] = Converter(BYTES_32);
-        converters[i].in <== proof[i];
-
-        var proofBitsInNumber = converters[i].out;
+        var proofBitsInNumber = proof[i];
 
         // Board L4.
         var previousHash = currentHashInNum[i] - lastPoseidonHashAdded[i];
@@ -114,14 +110,8 @@ template Withdrawal() {
     nullHasher.in <== nullifier;
     signal outputNullHash <-- nullHasher.hash;
 
-    // STEP 6.
-    // Convert nullifier hash into number.
-    component nullHashToNumConverter = Bits2Num(BYTES_32);
-    nullHashToNumConverter.in <== nullifierHash;
-    signal nullHashInNum <-- nullHashToNumConverter.out;
-
     // Final constraint.
     root === currentHashInNum[32] - lastPoseidonHashAdded[32];
-    outputNullHash === nullHashInNum;
+    outputNullHash === nullifierHash;
     // Headache stop.
 }

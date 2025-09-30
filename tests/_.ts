@@ -1,4 +1,4 @@
-import TinyMerkleTree, { bitsToNum, convertProofToBits, formatForCircom, generatekeys, getRandomNullifier, hashNums, smolPadding, standardizeToPoseidon } from "@fifteenfigures/tiny-merkle-tree"
+import TinyMerkleTree, { bitsToNum, convertProofToBits, formatForCircom, generatekeys, generateRandomNumber, getRandomNullifier, hashNums, smolPadding, standardizeToPoseidon } from "@fifteenfigures/tiny-merkle-tree"
 import { AbiCoder } from "ethers"
 import { writeFileSync } from "fs"
 import { strToHex } from "hexyjs"
@@ -48,9 +48,9 @@ const tree = new TinyMerkleTree(leaves)
 const root = bitsToNum(convertProofToBits(tree.root))
 const merkleProof = tree.generateMerkleProof(leaf)
 const { proof, directions, validBits } = formatForCircom(merkleProof)
-const nullifier = getRandomNullifier()
+const nullifier = generateRandomNumber()
 const nullHash = hashNums([nullifier])
-const nullifierHash = convertProofToBits(nullHash)
+const nullifierHash = bitsToNum(convertProofToBits(nullHash))
 
 writeFileSync("input.json", JSON.stringify({
     root: root.toString(),
@@ -61,6 +61,6 @@ writeFileSync("input.json", JSON.stringify({
     directions,
     validBits,
     proof,
-    nullifier,
-    nullifierHash
+    nullifier: nullifier.toString(),
+    nullifierHash: nullifierHash.toString()
 }))
