@@ -2,4 +2,4 @@ pragma circom  2.2.2;
 
 include "./src/withdrawal.circom";
 
-component main { public[ root, withdrawalKeyNumPart1, withdrawalKeyNumPart2, withdrawalKeyNumPart3, nullifier ] } = Withdrawal();
+component main { public[ root, withdrawalKeyNumPart1, withdrawalKeyNumPart2, nullifier ] } = Withdrawal();

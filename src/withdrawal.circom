@@ -30,10 +30,8 @@ template Withdrawal() {
     // First part of the withdrawal key, the hash.
     // The hash is computed with Poseidon. It is within mod.
     signal input withdrawalKeyNumPart1;
-    // Second part of the withdrawal key, the address.
-    signal input withdrawalKeyNumPart2;
     // The amount, in uint, it's uint224.
-    signal input withdrawalKeyNumPart3;
+    signal input withdrawalKeyNumPart2;
     // Merkle Proof formatted for Circom already.
     // 32 arrays, all containing 32-byte info in bits.
     signal input proof[ARRAY_LEN];
@@ -48,17 +46,15 @@ template Withdrawal() {
     // Nullifier hash.
     signal input nullifierHash;
 
-    component depositKeyKeyHash = HashMul(4);
+    component depositKeyKeyHash = HashMul(3);
     depositKeyKeyHash.in[0] <== withdrawalKeyNumPart1;
     depositKeyKeyHash.in[1] <== withdrawalKeyNumPart2;
-    depositKeyKeyHash.in[2] <== withdrawalKeyNumPart3;
-    depositKeyKeyHash.in[3] <== secretKey;
+    depositKeyKeyHash.in[2] <== secretKey;
     signal depositKey <-- depositKeyKeyHash.hash;
 
-    component leafHasher = HashMul(3);
+    component leafHasher = HashMul(2);
     leafHasher.in[0] <== depositKey;
     leafHasher.in[1] <== withdrawalKeyNumPart2;
-    leafHasher.in[2] <== withdrawalKeyNumPart3;
     signal leaf <-- leafHasher.hash;
 
     // Board L1.
