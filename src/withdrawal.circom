@@ -3,6 +3,7 @@ pragma circom 2.2.2;
 include "./hasher.circom";
 include "./converter.circom";
 include "./sort.circom";
+include "../node_modules/circomlib/circuits/comparators.circom";
 
 /**
  * Withdrawal Circuit.
@@ -19,6 +20,7 @@ template Withdrawal() {
     var BYTES_32 = 32 * 8;
     var BYTES_64 = 64 * 8;
     var BYTES_84 = 84 * 8;
+    var NOTE = 100000000; // $100.
 
     // Merkle root, 32 bytes, computed with Poseidon.
     // This is within mod.
@@ -49,6 +51,22 @@ template Withdrawal() {
     // Nullifier hash.
     signal input nullifierHash;
 
+    component isZeroCmp = IsEqual();
+    isZeroCmp.in[0] <== slot;
+    isZeroCmp.in[1] <== 0;
+
+    component isOneCmp = IsEqual();
+    isOneCmp.in[0] <== slot;
+    isOneCmp.in[1] <== 1;
+
+    signal isZero <-- isZeroCmp.out;
+    signal isOne <-- isOneCmp.out;
+
+    signal modResult <-- withdrawalKeyNumPart2 % NOTE;
+    signal amount <-- isZero * withdrawalKeyNumPart2
+          + isOne * modResult
+          + (1 - isZero - isOne) * NOTE;
+
     component depositKeyKeyHash = HashMul(3);
     depositKeyKeyHash.in[0] <== withdrawalKeyNumPart1;
     depositKeyKeyHash.in[1] <== withdrawalKeyNumPart2;
@@ -57,7 +75,7 @@ template Withdrawal() {
 
     component leafHasher = HashMul(2);
     leafHasher.in[0] <== depositKey + slot;
-    leafHasher.in[1] <== withdrawalKeyNumPart2;
+    leafHasher.in[1] <== amount;
     signal leaf <-- leafHasher.hash;
 
     // Board L1.

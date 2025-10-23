@@ -3,7 +3,10 @@
   "version": "0.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "tsx tests/_ && cd main_js && node generate_witness main.wasm ../input.json witness.wtns"
+    "test1": "tsx tests/_ && cd main_js && node generate_witness main.wasm ../input.json witness.wtns && cd ..",
+    "test2": "tsx tests/__ && cd main_js && node generate_witness main.wasm ../input.json witness.wtns && cd ..",
+    "test3": "tsx tests/__ && cd main_js && node generate_witness main.wasm ../input.json witness.wtns && cd ..",
+    "test": "npm run test1 && npm run test2 && npm run test3"
   },
   "author": "",
   "license": "ISC",
