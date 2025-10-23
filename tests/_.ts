@@ -23,7 +23,7 @@ const keys = generatekeys(amount, secretKey)
 const { keyHash, amountU32 } = extractKeyMetadata(keys.withdrawalKey)
 const { keyHash: dKeyHash } = extractKeyMetadata(keys.depositKey)
 
-const index = 1
+const index = 0
 
 const dKeyBigInt = BigInt(dKeyHash) + BigInt(index)
 const wKeyBigInt = BigInt(keyHash)

@@ -41,13 +41,13 @@ template Withdrawal() {
     // Valid bits, an array with 1s and 0s, control array.
     // Wherever 0 starts, the loop stops.
     signal input validBits[ARRAY_LEN];
+    // Slot.
+    // Allows a withdrawal key to be tied to more than one deposit keys.
+    signal input slot;
     // Special number used as nullifier.
     signal input nullifier;
     // Nullifier hash.
     signal input nullifierHash;
-    // Slot.
-    // Allows a withdrawal key to be tied to more than one deposit keys.
-    signal input slot;
 
     component depositKeyKeyHash = HashMul(3);
     depositKeyKeyHash.in[0] <== withdrawalKeyNumPart1;
