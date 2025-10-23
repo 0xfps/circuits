@@ -45,6 +45,9 @@ template Withdrawal() {
     signal input nullifier;
     // Nullifier hash.
     signal input nullifierHash;
+    // Slot.
+    // Allows a withdrawal key to be tied to more than one deposit keys.
+    signal input slot;
 
     component depositKeyKeyHash = HashMul(3);
     depositKeyKeyHash.in[0] <== withdrawalKeyNumPart1;
@@ -53,7 +56,7 @@ template Withdrawal() {
     signal depositKey <-- depositKeyKeyHash.hash;
 
     component leafHasher = HashMul(2);
-    leafHasher.in[0] <== depositKey;
+    leafHasher.in[0] <== depositKey + slot;
     leafHasher.in[1] <== withdrawalKeyNumPart2;
     signal leaf <-- leafHasher.hash;
 

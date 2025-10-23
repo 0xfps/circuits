@@ -23,7 +23,9 @@ const keys = generatekeys(amount, secretKey)
 const { keyHash, amountU32 } = extractKeyMetadata(keys.withdrawalKey)
 const { keyHash: dKeyHash } = extractKeyMetadata(keys.depositKey)
 
-const dKeyBigInt = BigInt(dKeyHash)
+const index = 1
+
+const dKeyBigInt = BigInt(dKeyHash) + BigInt(index)
 const wKeyBigInt = BigInt(keyHash)
 const amountBigInt = BigInt(amountU32)
 const secretKeyBigInt = BigInt(`0x${strToHex(secretKey)}`)
@@ -51,6 +53,7 @@ const nullifierHash = bitsToNum(convertProofToBits(nullHash))
 
 writeFileSync("input.json", JSON.stringify({
     root: root.toString(),
+    slot: index.toString(),
     withdrawalKeyNumPart1: wKeyBigInt.toString(),
     withdrawalKeyNumPart2: amountBigInt.toString(),
     secretKey: secretKeyBigInt.toString(),
