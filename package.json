@@ -1,0 +1,18 @@
+{
+  "name": "circuits",
+  "version": "0.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "tsx tests/_ && cd main_js && node generate_witness main.wasm ../input.json witness.wtns"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@fifteenfigures/tiny-merkle-tree": "^0.0.75",
+    "@zk2/ffjavascript": "^0.2.57",
+    "hexyjs": "^2.1.4",
+    "keccak256-circom": "git+https://github.com/vocdoni/keccak256-circom",
+    "poseidon-hash": "^1.0.1"
+  }
+}

@@ -1,0 +1,5 @@
+node_modules
+main_js
+outputs
+*.r1cs
+.DS_Store
