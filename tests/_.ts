@@ -1,4 +1,13 @@
-import TinyMerkleTree, { bitsToNum, convertProofToBits, formatForCircom, generatekeys, generateRandomNumber, getRandomNullifier, hashNums, smolPadding, standardizeToPoseidon } from "@fifteenfigures/tiny-merkle-tree"
+import TinyMerkleTree, {
+    bitsToNum,
+    convertProofToBits,
+    formatForCircom,
+    generateKeys,
+    generateRandomNumber,
+    hashNums,
+    smolPadding,
+    standardizeToPoseidon
+} from "@fifteenfigures/tiny-merkle-tree"
 import { AbiCoder } from "ethers"
 import { writeFileSync } from "fs"
 import { strToHex } from "hexyjs"
@@ -19,7 +28,7 @@ export function extractKeyMetadata(key: string) {
 
 const leaves = []
 
-const keys = generatekeys(amount, secretKey)
+const keys = generateKeys(amount, secretKey)
 const { keyHash, amountU32 } = extractKeyMetadata(keys.withdrawalKey)
 const { keyHash: dKeyHash } = extractKeyMetadata(keys.depositKey)
 
