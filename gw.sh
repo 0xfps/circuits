@@ -1,1 +1,0 @@
-node main_js/generate_witness main_js/main.wasm input.json outputs/witness.wtns

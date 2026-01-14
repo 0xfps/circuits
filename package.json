@@ -3,6 +3,10 @@
   "version": "0.0.0",
   "main": "index.js",
   "scripts": {
+    "build": "bash build.sh",
+    "compile": "circom main.circom --wasm --r1cs -l node_modules",
+    "generate": "bash gen.sh",
+    "generate:copy": "bash gen.sh && bash copy.sh", 
     "test": "tsx tests/_ && cd main_js && node generate_witness main.wasm ../input.json witness.wtns"
   },
   "author": "",
